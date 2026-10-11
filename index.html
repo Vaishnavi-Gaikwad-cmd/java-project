@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f8fc">
+  <title>MediCare | Hospital Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17243a;
+      --muted: #8590a3;
+      --line: #edf0f5;
+      --paper: #fff;
+      --canvas: #f6f8fc;
+      --teal: #0f9b8e;
+      --teal-dark: #087d74;
+      --navy: #1d2c45;
+      --blue: #5685f7;
+      --shadow: 0 8px 24px rgba(27, 43, 72, .045);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 5;
+      display: flex;
+      width: 246px;
+      flex-direction: column;
+      padding: 26px 17px 20px;
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 36px; }
+    .brand-mark {
+      display: grid;
+      width: 39px;
+      height: 39px;
+      place-items: center;
+      border-radius: 13px;
+      background: #e6f7f4;
+      color: var(--teal);
+    }
+    .brand-mark svg { width: 23px; height: 23px; }
+    .brand-name { font-size: 17px; font-weight: 750; letter-spacing: -.5px; }
+    .brand-name span { color: var(--teal); }
+    .nav-label { padding: 0 12px 10px; color: #a1aabb; font-size: 10px; font-weight: 750; letter-spacing: 1.2px; }
+    .nav-list { display: grid; gap: 5px; }
+    .nav-item {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #768197;
+      text-align: left;
+      transition: background .18s, color .18s;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex: 0 0 auto; }
+    .nav-item:hover { background: #f4f7fa; color: var(--ink); }
+    .nav-item.active { background: #eaf7f5; color: var(--teal-dark); font-weight: 650; }
+    .nav-spacer { flex: 1; }
+    .help-card { padding: 16px; border-radius: 13px; background: #f3f7fb; }
+    .help-card strong { display: block; margin-bottom: 4px; font-size: 12px; }
+    .help-card p { margin: 0 0 12px; color: var(--muted); font-size: 11px; }
+    .help-card button { padding: 7px 10px; border: 0; border-radius: 7px; background: white; color: var(--navy); font-size: 11px; font-weight: 650; }
+    .profile { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 14px 4px 0; border-top: 1px solid var(--line); }
+    .avatar { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #e9edff; color: #586ed0; font-size: 12px; font-weight: 700; }
+    .profile-name { font-size: 12px; font-weight: 700; }
+    .profile-role { color: var(--muted); font-size: 10px; }
+    .main { min-height: 100vh; margin-left: 246px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: flex;
+      height: 75px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 38px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+    }
+    .crumb { color: var(--muted); font-size: 12px; }
+    .crumb strong { color: var(--ink); font-weight: 650; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .search { position: relative; }
+    .search svg { position: absolute; top: 11px; left: 12px; width: 16px; color: #97a1b1; }
+    .search input { width: 215px; padding: 9px 12px 9px 36px; outline: none; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfe; font-size: 12px; }
+    .search input:focus { border-color: #9cd9d2; }
+    .icon-button { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: white; color: #657187; }
+    .icon-button svg { width: 17px; height: 17px; }
+    .page { width: min(1420px, 100%); margin: auto; padding: 30px 38px 44px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
+    .eyebrow { margin-bottom: 5px; color: var(--teal); font-size: 10px; font-weight: 750; letter-spacing: 1.25px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 25px; font-weight: 730; letter-spacing: -.8px; }
+    .page-subtitle { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .primary-button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 0; border-radius: 9px; background: var(--teal); color: white; font-size: 12px; font-weight: 650; box-shadow: 0 5px 12px #0f9b8e29; }
+    .primary-button:hover { background: var(--teal-dark); }
+    .primary-button svg { width: 15px; height: 15px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card, .panel { border: 1px solid var(--line); border-radius: 13px; background: var(--paper); box-shadow: var(--shadow); }
+    .stat-card { padding: 17px 18px; }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 11px; }
+    .stat-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; }
+    .stat-icon svg { width: 17px; height: 17px; }
+    .stat-icon.teal { background: #e8f7f5; color: #119889; }
+    .stat-icon.blue { background: #edf2ff; color: #6384ec; }
+    .stat-icon.orange { background: #fff4e8; color: #e59b42; }
+    .stat-icon.purple { background: #f3edff; color: #9567d5; }
+    .stat-number { margin: 10px 0 2px; font-size: 25px; font-weight: 740; letter-spacing: -.6px; }
+    .stat-foot { color: var(--muted); font-size: 10px; }
+    .stat-foot b { color: #169679; font-weight: 650; }
+    .stat-foot b.neutral { color: #71809a; }
+    .content-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(250px, .9fr); gap: 18px; align-items: start; }
+    .panel { overflow: hidden; }
+    .panel + .panel { margin-top: 18px; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+    .panel-title { margin: 0; font-size: 13px; font-weight: 720; }
+    .panel-caption { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+    .text-button { padding: 5px 0; border: 0; background: none; color: var(--teal-dark); font-size: 11px; font-weight: 650; }
+    .date-select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: white; color: #647188; font-size: 10px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th { padding: 11px 17px; background: #fbfcfe; color: #9aa3b2; font-size: 9px; font-weight: 700; letter-spacing: .65px; text-transform: uppercase; }
+    td { padding: 13px 17px; border-top: 1px solid #f1f3f6; color: #58657b; font-size: 10px; }
+    .person { display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 11px; font-weight: 650; }
+    .mini-avatar { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 9px; background: #edf3fa; color: #5c7695; font-size: 9px; font-weight: 700; }
+    .person small { display: block; color: var(--muted); font-size: 9px; font-weight: 400; }
+    .status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 20px; font-size: 9px; font-weight: 650; }
+    .status::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .status.confirmed, .status.completed { background: #e9f7f0; color: #25956c; }
+    .status.waiting { background: #fff5e8; color: #d88b31; }
+    .status.cancelled { background: #fff0ef; color: #d56d62; }
+    .schedule { padding: 6px 19px 13px; }
+    .schedule-row { display: grid; grid-template-columns: 47px 12px 1fr; gap: 10px; min-height: 63px; }
+    .schedule-time { padding-top: 14px; color: #8c97a8; font-size: 10px; }
+    .timeline { position: relative; display: flex; justify-content: center; }
+    .timeline::after { position: absolute; top: 24px; bottom: -1px; width: 1px; background: #edf0f5; content: ""; }
+    .schedule-row:last-child .timeline::after { display: none; }
+    .timeline-dot { z-index: 1; width: 8px; height: 8px; margin-top: 17px; border: 2px solid #b9e8e1; border-radius: 50%; background: var(--teal); }
+    .schedule-detail { align-self: start; margin-top: 8px; padding: 8px 10px; border-left: 2px solid #63c6b8; border-radius: 0 7px 7px 0; background: #f4faf9; }
+    .schedule-detail strong { display: block; font-size: 10px; font-weight: 650; }
+    .schedule-detail span { color: var(--muted); font-size: 9px; }
+    .notice { display: flex; align-items: flex-start; gap: 10px; margin: 0 18px 18px; padding: 11px; border: 1px solid #f5e8d0; border-radius: 9px; background: #fffbf3; }
+    .notice svg { width: 15px; flex: 0 0 auto; color: #dc9b3d; }
+    .notice strong { display: block; font-size: 10px; }
+    .notice span { color: var(--muted); font-size: 9px; }
+    .empty-state { display: none; padding: 28px; color: var(--muted); text-align: center; font-size: 12px; }
+    .footer-note { margin-top: 19px; color: #9aa3b2; font-size: 10px; text-align: center; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 16px; background: #1622387a; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(430px, 100%); padding: 22px; border-radius: 15px; background: white; box-shadow: 0 20px 60px #0d19334a; }
+    .modal-heading { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+    .modal-heading h2 { margin: 0; font-size: 18px; }
+    .modal-heading p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .close-button { display: grid; width: 30px; height: 30px; place-items: center; border: 0; border-radius: 8px; background: #f4f6f8; color: #6f7b8d; font-size: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { display: grid; gap: 6px; }
+    .field[hidden] { display: none; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #57647a; font-size: 10px; font-weight: 650; }
+    .field input, .field select { width: 100%; padding: 10px; border: 1px solid #e7ebf0; border-radius: 8px; outline: none; background: white; color: var(--ink); font-size: 11px; }
+    .field input:focus, .field select:focus { border-color: #89d0c6; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
+    .secondary-button { padding: 9px 13px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #6a7587; font-size: 11px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 15; padding: 12px 16px; transform: translateY(12px); border-radius: 10px; background: #1e334c; color: white; font-size: 12px; opacity: 0; pointer-events: none; transition: .2s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .mobile-menu { display: none; }
+    @media (max-width: 1050px) {
+      .sidebar { width: 212px; }
+      .main { margin-left: 212px; }
+      .topbar { padding: 0 25px; }
+      .page { padding: 25px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .content-grid { grid-template-columns: minmax(0, 1.4fr) minmax(220px, .9fr); }
+    }
+    @media (max-width: 760px) {
+      .sidebar { width: 70px; align-items: center; padding: 18px 9px; }
+      .brand { padding: 0 0 28px; }
+      .brand-name, .nav-label, .nav-item span, .help-card, .profile-details { display: none; }
+      .nav-list { width: 100%; }
+      .nav-item { justify-content: center; padding: 12px 0; }
+      .nav-item svg { width: 19px; height: 19px; }
+      .profile { justify-content: center; width: 100%; }
+      .main { margin-left: 70px; }
+      .topbar { height: 64px; padding: 0 17px; }
+      .search input { width: min(34vw, 190px); }
+      .page { padding: 22px 17px 32px; }
+      .content-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .topbar { gap: 8px; }
+      .crumb { font-size: 10px; }
+      .top-actions { gap: 7px; }
+      .search input { width: 135px; }
+      .icon-button { width: 33px; height: 33px; }
+      .page-heading { align-items: flex-start; flex-direction: column; }
+      .page-heading .primary-button { align-self: stretch; justify-content: center; }
+      h1 { font-size: 22px; }
+      .stats { gap: 9px; }
+      .stat-card { padding: 13px; }
+      .stat-number { font-size: 22px; }
+      .stat-top { font-size: 10px; }
+      th, td { padding-right: 12px; padding-left: 12px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/><path d="M5.6 5.6a9 9 0 1 0 12.8 0 9 9 0 0 0-12.8 0Z"/></svg>
+        </div>
+        <div class="brand-name">Medi<span>Care</span></div>
+      </div>
+      <div class="nav-label">MAIN MENU</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-item active" data-page="Dashboard" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="11" width="7" height="10" rx="2"/><rect x="3" y="14" width="8" height="7" rx="2"/></svg><span>Dashboard</span></button>
+        <button class="nav-item" data-page="Appointments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3"/></svg><span>Appointments</span></button>
+        <button class="nav-item" data-page="Patients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Patients</span></button>
+        <button class="nav-item" data-page="Doctors"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v4M16 3v4M7 7h10v4a5 5 0 0 1-10 0V7ZM12 16v5M8 21h8M12 9v4M10 11h4"/></svg><span>Doctors</span></button>
+        <button class="nav-item" data-page="Billing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M14 11h2M8 15h2M14 15h2"/></svg><span>Billing</span></button>
+        <button class="nav-item" data-page="Inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg><span>Inventory</span></button>
+      </nav>
+      <div class="nav-spacer"></div>
+      <div class="help-card"><strong>Need a hand?</strong><p>Visit the help center for quick tips.</p><button type="button" id="helpButton">Open help center</button></div>
+      <div class="profile">
+        <div class="avatar">AD</div>
+        <div class="profile-details"><div class="profile-name">Vaishnavi Gaikwad</div><div class="profile-role">Administrator</div></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">Workspace <span aria-hidden="true">/</span> <strong id="breadcrumb">Dashboard</strong></div>
+        <div class="top-actions">
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input id="searchInput" type="search" placeholder="Search patients..." aria-label="Search patients">
+          </label>
+          <button class="icon-button" type="button" id="notificationButton" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+          </button>
+        </div>
+      </header>
+      <section class="page">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow" id="todayLabel"></div>
+            <h1 id="pageTitle">Good morning, Vaishnavi <span aria-hidden="true">✦</span></h1>
+            <p class="page-subtitle" id="pageSubtitle">Here’s what’s happening at your hospital today.</p>
+          </div>
+          <button class="primary-button" id="newAppointmentButton" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            New appointment
+          </button>
+        </div>
+
+        <div class="stats" aria-label="Hospital overview">
+          <article class="stat-card">
+            <div class="stat-top"><span>Total patients</span><span class="stat-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87"/></svg></span></div>
+            <div class="stat-number" id="patientCount">2,840</div>
+            <div class="stat-foot"><b>↑ 12.8%</b> <span>vs. last month</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Appointments today</span><span class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3"/></svg></span></div>
+            <div class="stat-number" id="appointmentCount">24</div>
+            <div class="stat-foot"><b class="neutral">8 completed</b> <span>of 24 scheduled</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Available doctors</span><span class="stat-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v4M16 3v4M7 7h10v4a5 5 0 0 1-10 0V7ZM12 16v5M8 21h8"/></svg></span></div>
+            <div class="stat-number">18 <span style="color:#9aa3b2;font-size:14px;font-weight:500">/ 22</span></div>
+            <div class="stat-foot"><b class="neutral">4 on leave</b> <span>today</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>Available beds</span><span class="stat-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 18V6M3 15h18v3M7 15V9h6a4 4 0 0 1 4 4v2M7 12h.01M21 18v2M3 18v2"/></svg></span></div>
+            <div class="stat-number">32 <span style="color:#9aa3b2;font-size:14px;font-weight:500">/ 96</span></div>
+            <div class="stat-foot"><b class="neutral">67% occupancy</b> <span>across wards</span></div>
+          </article>
+        </div>
+
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div><h2 class="panel-title" id="tableTitle">Today’s appointments</h2><p class="panel-caption" id="tableCaption">A quick look at the patients coming in today</p></div>
+              <button class="text-button" id="viewAllButton" type="button">View all <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr id="tableHead"><th>Patient</th><th>Doctor</th><th>Time</th><th>Department</th><th>Status</th></tr></thead>
+                <tbody id="appointmentsBody"></tbody>
+              </table>
+              <div class="empty-state" id="emptyState">No matching records found.</div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="panel-header">
+                <div><h2 class="panel-title">Today’s schedule</h2><p class="panel-caption">Your upcoming appointments</p></div>
+                <select class="date-select" aria-label="Schedule day"><option>Today</option><option>Tomorrow</option></select>
+              </div>
+              <div class="schedule" id="schedule"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div><h2 class="panel-title">Quick overview</h2><p class="panel-caption">Hospital activity at a glance</p></div>
+                <button class="text-button" type="button" id="overviewButton">Details</button>
+              </div>
+              <div style="padding:16px 19px 5px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:7px;font-size:10px"><span style="color:#718096">Bed occupancy</span><strong>67%</strong></div>
+                <div style="height:7px;overflow:hidden;border-radius:9px;background:#eff2f6"><div style="width:67%;height:100%;border-radius:9px;background:linear-gradient(90deg,#59c5b5,#159c8e)"></div></div>
+                <div style="display:flex;justify-content:space-between;margin:6px 0 15px;color:#9aa3b2;font-size:9px"><span>64 occupied</span><span>32 available</span></div>
+              </div>
+              <div class="notice">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                <div><strong>Low stock alert</strong><span>Amoxicillin 500mg is below the reorder level.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-note">MediCare Hospital Management · Frontend preview with sample data</div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="appointmentModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <form class="modal" id="appointmentForm">
+      <div class="modal-heading">
+        <div><h2 id="modalTitle">New appointment</h2><p>Add an appointment to today’s schedule.</p></div>
+        <button class="close-button" type="button" id="closeModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="field full"><label for="patientName">Patient name</label><input id="patientName" name="patientName" placeholder="e.g. Jamie Wilson" required></div>
+        <div class="field"><label for="doctorName">Doctor</label><select id="doctorName" name="doctorName"><option>Dr. Sarah Chen</option><option>Dr. James Wilson</option><option>Dr. Emily Parker</option><option>Dr. Michael Reed</option></select></div>
+        <div class="field"><label for="department">Department</label><select id="department" name="department"><option>Cardiology</option><option>General Medicine</option><option>Pediatrics</option><option>Neurology</option><option>Dermatology</option></select></div>
+        <div class="field"><label for="appointmentDate">Date</label><input id="appointmentDate" name="appointmentDate" type="date" required></div>
+        <div class="field"><label for="appointmentTime">Time</label><input id="appointmentTime" name="appointmentTime" type="time" required></div>
+      </div>
+      <div class="modal-actions"><button class="secondary-button" type="button" id="cancelModal">Cancel</button><button class="primary-button" type="submit">Add appointment</button></div>
+    </form>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const appointments = [
+      { patient: "Olivia Bennett", initials: "OB", patientId: "PT-2048", doctor: "Dr. Sarah Chen", time: "09:00 AM", department: "Cardiology", status: "Confirmed" },
+      { patient: "Noah Williams", initials: "NW", patientId: "PT-2051", doctor: "Dr. James Wilson", time: "09:30 AM", department: "General Medicine", status: "Waiting" },
+      { patient: "Ava Thompson", initials: "AT", patientId: "PT-2053", doctor: "Dr. Emily Parker", time: "10:00 AM", department: "Pediatrics", status: "Confirmed" },
+      { patient: "Liam Anderson", initials: "LA", patientId: "PT-2056", doctor: "Dr. Michael Reed", time: "10:30 AM", department: "Neurology", status: "Completed" },
+      { patient: "Sophia Martinez", initials: "SM", patientId: "PT-2060", doctor: "Dr. Sarah Chen", time: "11:00 AM", department: "Cardiology", status: "Waiting" }
+    ];
+    const patients = [
+      { patient: "Olivia Bennett", initials: "OB", patientId: "PT-2048", phone: "(555) 201-4480", department: "Cardiology", status: "Active" },
+      { patient: "Noah Williams", initials: "NW", patientId: "PT-2051", phone: "(555) 306-9122", department: "General Medicine", status: "Active" },
+      { patient: "Ava Thompson", initials: "AT", patientId: "PT-2053", phone: "(555) 410-6620", department: "Pediatrics", status: "Active" },
+      { patient: "Liam Anderson", initials: "LA", patientId: "PT-2056", phone: "(555) 781-0521", department: "Neurology", status: "Active" },
+      { patient: "Sophia Martinez", initials: "SM", patientId: "PT-2060", phone: "(555) 218-9945", department: "Cardiology", status: "Active" }
+    ];
+    const doctors = [
+      { patient: "Dr. Sarah Chen", initials: "SC", patientId: "Cardiology", phone: "09:00 AM – 04:00 PM", department: "Cardiology", status: "Available" },
+      { patient: "Dr. James Wilson", initials: "JW", patientId: "General Medicine", phone: "08:30 AM – 03:30 PM", department: "General Medicine", status: "Available" },
+      { patient: "Dr. Emily Parker", initials: "EP", patientId: "Pediatrics", phone: "10:00 AM – 05:00 PM", department: "Pediatrics", status: "Available" },
+      { patient: "Dr. Michael Reed", initials: "MR", patientId: "Neurology", phone: "09:00 AM – 02:00 PM", department: "Neurology", status: "On break" }
+    ];
+    const inventory = [
+      { patient: "Amoxicillin 500mg", initials: "Rx", patientId: "MED-1048", phone: "12 units", department: "Reorder level: 20", status: "Low stock" },
+      { patient: "Paracetamol 650mg", initials: "Rx", patientId: "MED-1021", phone: "184 units", department: "Reorder level: 40", status: "In stock" },
+      { patient: "Metformin 500mg", initials: "Rx", patientId: "MED-1083", phone: "96 units", department: "Reorder level: 30", status: "In stock" },
+      { patient: "Atorvastatin 20mg", initials: "Rx", patientId: "MED-1122", phone: "8 units", department: "Reorder level: 15", status: "Low stock" }
+    ];
+    const billing = [
+      { patient: "Olivia Bennett", initials: "OB", patientId: "INV-3001", phone: "Oct 11, 2026", department: "$240.00", status: "Completed" },
+      { patient: "Noah Williams", initials: "NW", patientId: "INV-3002", phone: "Oct 11, 2026", department: "$85.00", status: "Pending" },
+      { patient: "Ava Thompson", initials: "AT", patientId: "INV-3003", phone: "Oct 10, 2026", department: "$120.00", status: "Completed" },
+      { patient: "Liam Anderson", initials: "LA", patientId: "INV-3004", phone: "Oct 10, 2026", department: "$310.00", status: "Pending" }
+    ];
+    const pageMeta = {
+      Dashboard: ["Today’s appointments", "A quick look at the patients coming in today"],
+      Appointments: ["All appointments", "Manage today’s patient visits and appointment status"],
+      Patients: ["Patient directory", "Browse and search your registered patients"],
+      Doctors: ["Medical team", "Today’s doctors and their departments"],
+      Billing: ["Recent invoices", "Review the latest patient billing activity"],
+      Inventory: ["Medicine inventory", "Check stock levels and reorder alerts"]
+    };
+    const modal = document.getElementById("appointmentModal");
+    const toast = document.getElementById("toast");
+    let currentPage = "Dashboard";
+    let toastTimer;
+
+    function initialsFor(name) {
+      return name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+    }
+
+    function statusClass(status) {
+      const value = status.toLowerCase();
+      if (value.includes("wait") || value.includes("pending") || value.includes("break")) return "waiting";
+      if (value.includes("cancel") || value.includes("low")) return "cancelled";
+      if (value.includes("complete")) return "completed";
+      return "confirmed";
+    }
+
+    function rowsForPage() {
+      if (currentPage === "Patients") return patients;
+      if (currentPage === "Doctors") return doctors;
+      if (currentPage === "Billing") return billing;
+      if (currentPage === "Inventory") return inventory;
+      return appointments;
+    }
+
+    function renderTable() {
+      const body = document.getElementById("appointmentsBody");
+      const query = document.getElementById("searchInput").value.trim().toLowerCase();
+      const rows = rowsForPage().filter(item => Object.values(item).some(value => String(value).toLowerCase().includes(query)));
+      body.innerHTML = rows.map(item => {
+        const isAppointment = currentPage === "Dashboard" || currentPage === "Appointments";
+        const columns = isAppointment
+          ? [item.doctor, item.time, item.department]
+          : currentPage === "Billing" || currentPage === "Inventory"
+            ? [item.patientId, item.phone, item.department]
+            : [item.phone, item.department, item.patientId];
+        return `<tr>
+          <td><div class="person"><span class="mini-avatar">${item.initials}</span><span>${item.patient}<small>${item.patientId}</small></span></div></td>
+          <td>${columns[0]}</td>
+          <td>${columns[1]}</td>
+          <td>${columns[2]}</td>
+          <td><span class="status ${statusClass(item.status)}">${item.status}</span></td>
+        </tr>`;
+      }).join("");
+      document.getElementById("emptyState").style.display = rows.length ? "none" : "block";
+    }
+
+    function renderSchedule() {
+      const schedule = document.getElementById("schedule");
+      schedule.innerHTML = appointments.slice(0, 4).map(item => `
+        <div class="schedule-row">
+          <div class="schedule-time">${item.time.replace(":00", "").replace(":30", ":30")}</div>
+          <div class="timeline"><span class="timeline-dot"></span></div>
+          <div class="schedule-detail"><strong>${item.patient} <span style="color:#a0a9b7;font-weight:400">· ${item.doctor}</span></strong><span>${item.department}</span></div>
+        </div>`).join("");
+    }
+
+    function setPage(page) {
+      currentPage = page;
+      document.querySelectorAll(".nav-item").forEach(button => {
+        const active = button.dataset.page === page;
+        button.classList.toggle("active", active);
+        if (active) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      document.getElementById("breadcrumb").textContent = page;
+      document.getElementById("pageTitle").textContent = page === "Dashboard" ? "Good morning, Vaishnavi ✦" : page;
+      document.getElementById("pageSubtitle").textContent = page === "Dashboard" ? "Here’s what’s happening at your hospital today." : `Manage your hospital ${page.toLowerCase()} in one place.`;
+      document.getElementById("tableTitle").textContent = pageMeta[page][0];
+      document.getElementById("tableCaption").textContent = pageMeta[page][1];
+      document.getElementById("tableHead").innerHTML = page === "Dashboard" || page === "Appointments"
+        ? "<th>Patient</th><th>Doctor</th><th>Time</th><th>Department</th><th>Status</th>"
+        : page === "Patients"
+          ? "<th>Patient</th><th>Phone</th><th>Department</th><th>Patient ID</th><th>Status</th>"
+          : page === "Doctors"
+            ? "<th>Doctor</th><th>Hours</th><th>Department</th><th>Specialty</th><th>Status</th>"
+            : page === "Billing"
+              ? "<th>Patient</th><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th>"
+              : "<th>Medicine</th><th>Item ID</th><th>Quantity</th><th>Stock details</th><th>Status</th>";
+      document.getElementById("newAppointmentButton").innerHTML = page === "Patients"
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Add patient'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> New appointment';
+      renderTable();
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+    }
+
+    function openModal() {
+      const addingPatient = currentPage === "Patients";
+      document.getElementById("modalTitle").textContent = addingPatient ? "Add patient" : "New appointment";
+      document.querySelector(".modal-heading p").textContent = currentPage === "Patients" ? "Add a patient to the directory." : "Add an appointment to today’s schedule.";
+      document.querySelector("#appointmentForm .primary-button").textContent = addingPatient ? "Add patient" : "Add appointment";
+      ["doctorName", "department", "appointmentDate", "appointmentTime"].forEach(id => {
+        const field = document.getElementById(id);
+        field.closest(".field").hidden = addingPatient;
+        field.required = !addingPatient && ["appointmentDate", "appointmentTime"].includes(id);
+      });
+      document.getElementById("appointmentDate").value = localDate;
+      modal.classList.add("open");
+      document.getElementById("patientName").focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove("open");
+    }
+
+    document.querySelectorAll(".nav-item").forEach(button => button.addEventListener("click", () => setPage(button.dataset.page)));
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    document.getElementById("newAppointmentButton").addEventListener("click", openModal);
+    document.getElementById("viewAllButton").addEventListener("click", () => setPage("Appointments"));
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("cancelModal").addEventListener("click", closeModal);
+    document.getElementById("notificationButton").addEventListener("click", () => showToast("You’re all caught up on notifications."));
+    document.getElementById("helpButton").addEventListener("click", () => showToast("Help center is coming soon."));
+    document.getElementById("overviewButton").addEventListener("click", () => showToast("32 beds are currently available."));
+    modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+
+    document.getElementById("appointmentForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const patient = form.elements.patientName.value.trim();
+      if (!patient) return;
+      if (currentPage === "Patients") {
+        const record = { patient, initials: initialsFor(patient), patientId: `PT-${2061 + patients.length}`, phone: "—", department: "General Medicine", status: "Active" };
+        patients.unshift(record);
+        document.getElementById("patientCount").textContent = (2840 + patients.length - 5).toLocaleString();
+        setPage("Patients");
+        showToast(`${patient} added to the patient directory.`);
+      } else {
+        const time = form.elements.appointmentTime.value;
+        const formattedTime = time ? new Date(`2000-01-01T${time}`).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "12:00 PM";
+        const doctor = form.elements.doctorName.value;
+        const department = form.elements.department.value;
+        appointments.push({ patient, initials: initialsFor(patient), patientId: `PT-${2061 + patients.length}`, doctor, time: formattedTime, department, status: "Confirmed" });
+        patients.unshift({ patient, initials: initialsFor(patient), patientId: `PT-${2060 + patients.length}`, phone: "—", department, status: "Active" });
+        document.getElementById("appointmentCount").textContent = String(24 + appointments.length - 5);
+        renderSchedule();
+        renderTable();
+        showToast(`Appointment scheduled for ${patient}.`);
+      }
+      form.reset();
+      closeModal();
+    });
+
+    const now = new Date();
+    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    document.getElementById("todayLabel").textContent = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(now);
+    document.getElementById("appointmentDate").value = localDate;
+    renderSchedule();
+    renderTable();
+  </script>
+</body>
+</html>
